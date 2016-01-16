@@ -157,7 +157,7 @@ class Quad(object):
     margin = None 
     w      = None 
     h      = None 
-    color  = lightgrey
+    color  = white
 
     def __init__(self, x, y):
         self.x = x
@@ -1100,7 +1100,7 @@ def drawTimerAndScore(s):
 def drawAll(s):
     var.surface.draw(s)
     var.quadLst[0].draw(s)
-    var.backgroundTimerLst[0].draw(s)
+    #var.backgroundTimerLst[0].draw(s)
     drawTimerAndScore(s)
     var.stroop.draw(s)
     var.letters.draw(s)
