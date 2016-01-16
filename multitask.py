@@ -179,7 +179,7 @@ class Quad(object):
                       q.w, q.h)
 
 class BackgroundTimer(object):
-    timeOutPeriod = 100
+    timeOutPeriod = 300
     msElapsed     = 0 #since last updated image
     color         = white
 
@@ -196,8 +196,7 @@ class BackgroundTimer(object):
                 y = Quad.margin + Quad.h / 2 + (i > 1) * (Quad.h + Quad.margin / 2)
                 r = Quad.h / 2
                 ptsLst = [[x, y], [x, y - r], [x + 1, y - r]]
-                speed = ((Quad.w * 2 + Quad.h * 2) / (classes[i].timeOutPeriod / 1000) * 
-                         (BackgroundTimer.timeOutPeriod / classes[i].timeOutPeriod)
+                speed = ((Quad.w * 2 + Quad.h * 2) / (float(classes[i].timeOutPeriod))) * BackgroundTimer.timeOutPeriod
                 var.backgroundTimerLst.append(BackgroundTimer(ptsLst, speed))
         else:
             for t in var.backgroundTimerLst: #t for timer
@@ -572,9 +571,11 @@ class Target(object):
             Target.totalIncorrectScore += Target.failureScore
         else:
             for i in xrange(Target.numCircles):
-                if d.distance < Target.offset * (i + 1):
-                    var.score += i * Target.successScore
-                    Target.totalCorrectScore += i * Target.successScore
+                if d.distance < Target.offset * (i + 1) + Target.offset / 3:
+                    if i > var.target.dot.curRing:
+                        var.target.dot.curRing = i
+                        var.score += i * Target.successScore
+                        Target.totalCorrectScore += i * Target.successScore
                     return
 
     def draw(self, s):
@@ -611,6 +612,7 @@ class Target(object):
             self.y         = y
             self.direction = direction
             self.distance  = distance #distance from center of target to center of dot
+            self.curRing   = 0
 
     class button(object):
         w            = None
