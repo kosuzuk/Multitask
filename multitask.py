@@ -569,14 +569,6 @@ class Target(object):
         if d.distance > Target.distance:
             var.score += Target.failureScore
             Target.totalIncorrectScore += Target.failureScore
-        else:
-            for i in xrange(Target.numCircles):
-                if d.distance < Target.offset * (i + 1) + Target.offset / 3:
-                    if i > var.target.dot.curRing:
-                        var.target.dot.curRing = i
-                        var.score += i * Target.successScore
-                        Target.totalCorrectScore += i * Target.successScore
-                    return
 
     def draw(self, s):
         #draw target
@@ -599,6 +591,11 @@ class Target(object):
             drawText(s, b.textX, b.textY, b.text, b.textSize, black)
 
     def action(self, p):
+        for i in xrange(Target.numCircles):
+            if var.target.dot.distance < Target.offset * (i + 1):
+                var.score += i * Target.successScore
+                Target.totalCorrectScore += i * Target.successScore
+                break
         direction = math.radians(random.randrange(0, 359))
         var.target.dot = Target.dot(Target.x, Target.y, direction, 0 - Target.dot.speed)
         return "Target reset"
@@ -606,13 +603,12 @@ class Target(object):
     class dot(object):
         radius = None
         speed  = None
-        color = red
+        color  = red
         def __init__(self, x, y, direction, distance):
             self.x         = x
             self.y         = y
             self.direction = direction
             self.distance  = distance #distance from center of target to center of dot
-            self.curRing   = 0
 
     class button(object):
         w            = None
@@ -1113,7 +1109,7 @@ def actionAll(p): #p for mouse position
     result = ""
     if (p[0] > var.stroop.buttonLst[0].x and 
         p[0] < var.stroop.buttonLst[0].x + var.stroop.buttonLst[0].w and 
-        p[1] > var.stroop.buttonLst[0].y and
+        p[1] > var.stroop.buttonLst[0].y and 
         p[1] < var.stroop.buttonLst[3].y + var.stroop.buttonLst[0].h):
         result = var.stroop.action(p)
     elif (p[0] > 0 and p[0] < Surface.w / 2 and p[1] > 0 and p[1] < Surface.h / 2):
