@@ -12,7 +12,7 @@ white     = (255, 255, 255)
 red       = (255, 0, 0)
 green     = (0, 220, 0)
 blue      = (0, 0, 255)
-yellow    = (255, 240, 0)
+yellow    = (250, 220, 0)
 purple    = (255, 0, 255)
 cyan      = (0, 255, 255)
 darkblue  = (0, 55, 75)
@@ -241,7 +241,7 @@ class Stroop(object):
         if var.playing == False:
             Stroop.question.x    = Quad.w * 1.35
             Stroop.question.y    = Quad.margin * 0.75 + Quad.h / 2
-            Stroop.question.size = Surface.w / 9
+            Stroop.question.size = Surface.w / 10.5
             var.stroop = Stroop()
             #inputs to Stroop.question.__init__ are text, answer, color
             var.stroop.question  = Stroop.question(temp, temp, eval(temp))
@@ -279,7 +279,7 @@ class Stroop(object):
     def draw(self, s):
         #draw question
         q = var.stroop.question
-        drawText(s, q.x, q.y, q.text, q.size, q.color)
+        drawText(s, q.x, q.y, q.text.upper(), q.size, q.color)
 
         #draw buttons
         for b in var.stroop.buttonLst:
@@ -299,7 +299,7 @@ class Stroop(object):
                     Stroop.numIncorrect += 1
                     result = "Stroop incorrect"
                 Stroop().getValues()
-                Stroop.msElapsed = var.msElapsed
+                var.stroop.msElapsed = var.msElapsed
         return result
 
     class question(object):
@@ -348,13 +348,13 @@ class Letters(object):
             var.letters = Letters()
             temp = ""
             for i in xrange(Letters.stringLength):
-                newChar = chr(random.randrange(97, 122))
-                while newChar in temp: newChar = chr(random.randrange(97, 122))
+                newChar = chr(random.randrange(65, 91))
+                while newChar in temp: newChar = chr(random.randrange(65, 91))
                 temp += newChar
             Letters.string = temp
 
             #instance of char question
-            newChar = chr(random.randrange(97, 122))
+            newChar = chr(random.randrange(65, 91))
             Letters.question              = Letters.question(newChar, newChar in temp)
             Letters.question.x            = Quad.margin * 0.75 + Quad.w / 2
             #between screen edge and show string button
@@ -364,7 +364,7 @@ class Letters(object):
             Letters.question.outline      = 2
             Letters.question.outlineColor = black
             Letters.question.textX        = Letters.question.x
-            Letters.question.textY        = Letters.question.y
+            Letters.question.textY        = Letters.question.y * 1.05
             Letters.question.textSize     = Letters.question.radius * 2
             Letters.question.textColor    = black
 
@@ -402,8 +402,8 @@ class Letters(object):
         #new char question each time interval
         q = var.letters.question
         oldChar = q.char
-        newChar = chr(random.randrange(97, 122))
-        while newChar == oldChar: newChar = chr(random.randrange(97, 122))
+        newChar = chr(random.randrange(65, 91))
+        while newChar == oldChar: newChar = chr(random.randrange(65, 91))
         q.char = newChar
         q.answer = newChar in Letters.button.string
         x = Quad.margin + Quad.w / 2
@@ -423,6 +423,7 @@ class Letters(object):
                       b.w, b.h, 0, b.outline, b.outlineColor)
             drawText(s, b.textX, b.textY, b.text, 
                      b.textSize, b.textColor)
+            if b.text == Letters.string: return
 
     def action(self, p):
         result = ""
@@ -441,6 +442,7 @@ class Letters(object):
             return result
 
         #boolean button
+        if bLst[0].text == Letters.string: return result
         for i in xrange(1, 3):
             if (p[0] > bLst[i].x and 
                 p[0] < bLst[i].x + bLst[i].w and 
@@ -455,7 +457,7 @@ class Letters(object):
                     Letters.numIncorrect += 1
                     result = "Letters incorrect"
                 var.letters.getValues()
-                Letters.msElapsed = var.msElapsed
+                var.letters.msElapsed = var.msElapsed
         return result
 
     def displayed(self):
@@ -464,7 +466,7 @@ class Letters(object):
         if ((var.msElapsed - l.stringStart)
             > l.stringDuration):
             l.buttonLst[0].color = grey
-            l.buttonLst[0].text = "show string (" + str(Letters.showStringScore) + ")"
+            l.buttonLst[0].text = "Retrieve List"
             l.buttonLst[0].textColor = red
 
     class question(object):
@@ -547,7 +549,7 @@ class Target(object):
                 b.color        = grey
                 b.outline      = 2
                 b.outlineColor = black
-                b.text         = "reset"
+                b.text         = "Reset"
                 b.textSize     = b.w / 3
                 b.textColor    = black
                 if i == 0:
@@ -692,11 +694,15 @@ class Numbers(object):
                 if math.sqrt((p[1] - (n.button.startY + n.button.offset * row)) ** 2 + 
                              (p[0] - (n.button.startX + n.button.offset * col)) ** 2) < n.button.radius:
                     if var.numbers.buttonLst[row * 4 + col].number == Numbers.maxNumber:
-                        var.numbers.buttonLst[row * 4 + col].color = darkgrey
-                        n.pressedButtonLst.append(var.numbers.buttonLst[row * 4 + col])
+                        if var.numbers.buttonLst[row * 4 + col] in n.pressedButtonLst:
+                            var.numbers.buttonLst[row * 4 + col].color = white
+                            n.pressedButtonLst.remove(var.numbers.buttonLst[row * 4 + col])
+                        else:
+                            var.numbers.buttonLst[row * 4 + col].color = darkgrey
+                            n.pressedButtonLst.append(var.numbers.buttonLst[row * 4 + col])
                         if len(n.pressedButtonLst) == n.numMaxNumbers:
                             n().getValues()
-                            n.msElapsed = var.msElapsed
+                            var.numbers.msElapsed = var.msElapsed
                             var.score += Numbers.successScore
                             Numbers.numCorrect += 1
                             result = "Numbers correct"
@@ -733,8 +739,8 @@ def enterText(s, text):
     elif "log" in text: text = "log file"
     text = "enter " + text + " name: "
     if "subject" in text: text.replace(": ", "(use underscore for space): ")
-    s.fill(black)
-    drawText(s, 400, 100, text, 40, white)
+    s.fill(white)
+    drawText(s, 400, 350, text, 40, black)
     p = pygame
     p.display.update()
     asking = True
@@ -753,8 +759,8 @@ def enterText(s, text):
                 else:
                     if event.key == p.K_BACKSPACE: text = text[ : len(text) - 1]
                     else: text += chr(event.key) #valid key
-                    s.fill(black)
-                    drawText(s, 400, 100, text, 40, white)
+                    s.fill(white)
+                    drawText(s, 400, 350, text, 40, black)
                     p.display.update()
             elif event.type == p.QUIT: #x out
                 p.quit()
@@ -774,9 +780,15 @@ def enterText(s, text):
         Log.fileName = text[text.index(":") + 2 : ]
 
 def ask(text):
-    surfaceSize = (800, 200)
+    timedOut = True if "participation" in text else False
+    if timedOut:
+        text2 = text[text.index("n.") + 2 : ] #split the text bc it's too long
+        text = text[ : text.index("n.") + 2]
+    surfaceSize = (800, 700)
     surface = pygame.display.set_mode(surfaceSize)
-    drawText(surface, surfaceSize[0] / 2, surfaceSize[1] / 2, text, 40, white)
+    pygame.Surface.fill(surface, white)
+    drawText(surface, surfaceSize[0] / 2, surfaceSize[1] / 2, text, 40, black)
+    if timedOut: drawText(surface, surfaceSize[0] / 2, surfaceSize[1] / 1.7, text2, 40, black)
     pygame.display.update()
     asking = True
     while asking:
@@ -784,16 +796,19 @@ def ask(text):
             if event.type == pygame.KEYDOWN:
                 try:
                     if event.key == pygame.K_y:
-                        asking = False
+                        if not timedOut: asking = False
                     elif event.key == pygame.K_n:
-                        enterText(surface, text)
-                        asking = False
+                        if not timedOut:
+                            enterText(surface, text)
+                            asking = False
                     elif event.key == pygame.K_ESCAPE:
+                        if timedOut: writeLog()
                         pygame.quit()
                         sys.exit()
                 except:
                     pass
             elif event.type == pygame.QUIT: #x out
+                if timedOut: writeLog()
                 pygame.quit()
                 sys.exit()
 
@@ -1056,7 +1071,7 @@ def checkTime():
     var.msElapsed = pygame.time.get_ticks() - var.popUpDuration
     #check time out for entire game
     if var.msElapsed > var.timeLeft:
-        var.playing = False
+        ask("You are done. Thank you for your participation. Press 'esc' to exit.")
 
     #check time out for specific modules
     classes = [var.backgroundTimerLst[0], var.stroop, var.letters, var.target, var.numbers, var.log]
@@ -1090,8 +1105,8 @@ def drawTimerAndScore(s):
     textSize = (rectW + rectH * 2) / 9
     timerText = "Timer: " + str((var.timeLeft - var.msElapsed) / 1000 + 1)
     scoreText = "Score: " + str(var.score)
-    drawText(s, rectX + rectW / 2, rectY + rectH * 0.35, timerText, textSize)
-    drawText(s, rectX + rectW / 2, rectY + rectH * 0.7, scoreText, textSize)
+    #drawText(s, rectX + rectW / 2, rectY + rectH * 0.35, timerText, textSize)
+    drawText(s, rectX + rectW / 2, rectY + rectH / 2, scoreText, textSize)
 
 def drawAll(s):
     var.surface.draw(s)
@@ -1151,7 +1166,6 @@ def main():
             if event.type == pygame.QUIT:
                 var.playing = False
         var.log.update()
-    writeLog()
     pygame.quit()
     sys.exit()
 
