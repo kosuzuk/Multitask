@@ -348,13 +348,13 @@ class Letters(object):
             var.letters = Letters()
             temp = ""
             for i in xrange(Letters.stringLength):
-                newChar = chr(random.randrange(65, 91))
-                while newChar in temp: newChar = chr(random.randrange(65, 91))
+                newChar = chr(random.randrange(97, 123))
+                while newChar in temp: newChar = chr(random.randrange(97, 123))
                 temp += newChar
             Letters.string = temp
 
             #instance of char question
-            newChar = chr(random.randrange(65, 91))
+            newChar = chr(random.randrange(97, 123))
             Letters.question              = Letters.question(newChar, newChar in temp)
             Letters.question.x            = Quad.margin * 0.75 + Quad.w / 2
             #between screen edge and show string button
@@ -376,7 +376,6 @@ class Letters(object):
             b.color        = grey                   #then divide the rest by 5
             b.outline      = b.w / 50
             b.outlineColor = black
-            b.string       = ""
             b.textSize     = Quad.w / 13 + Quad.h / 30
             b.textColor    = black
             text = temp
@@ -402,10 +401,10 @@ class Letters(object):
         #new char question each time interval
         q = var.letters.question
         oldChar = q.char
-        newChar = chr(random.randrange(65, 91))
-        while newChar == oldChar: newChar = chr(random.randrange(65, 91))
+        newChar = chr(random.randrange(97, 123))
+        while newChar == oldChar: newChar = chr(random.randrange(97, 123))
         q.char = newChar
-        q.answer = newChar in Letters.button.string
+        q.answer = newChar in Letters.string
         x = Quad.margin + Quad.w / 2
         y = Quad.margin + Quad.h / 2
         r = Quad.h / 2
@@ -415,13 +414,15 @@ class Letters(object):
         #draw char
         q = var.letters.question
         drawShape(s, "circle", (q.x, q.y), q.circleColor, 0, 0, q.radius, q.outline, q.outlineColor)
-        drawText(s, q.textX, q.textY, q.char, q.textSize, q.textColor)
+        drawText(s, q.textX, q.textY, q.char.upper(), q.textSize, q.textColor)
 
         #draw show string and boolean buttons
         for b in var.letters.buttonLst:
+            text = b.text
+            if text not in ["Retrieve List", "True", "False"]: text = text.upper()
             drawShape(s, "rect", (b.x, b.y), b.color, 
                       b.w, b.h, 0, b.outline, b.outlineColor)
-            drawText(s, b.textX, b.textY, b.text, 
+            drawText(s, b.textX, b.textY, text, 
                      b.textSize, b.textColor)
             if b.text == Letters.string: return
 
@@ -587,7 +588,7 @@ class Target(object):
         drawShape(s, "circle", (d.x, d.y), d.color, 0, 0, d.radius)
 
         #draw reset buttons
-        for b in var.target.buttonLst:
+        for b in Target.buttonLst:
             drawShape(s, "rect", (b.x, b.y), b.color, 
                       b.w, b.h, 0, b.outline, b.outlineColor)        
             drawText(s, b.textX, b.textY, b.text, b.textSize, black)
@@ -631,7 +632,6 @@ class Target(object):
 class Numbers(object):
     timeOutPeriod    = None
     successScore     = None
-    failureScore     = None
     timeOutScore     = None
     msElapsed        = 0
     rows             = 4
@@ -689,27 +689,30 @@ class Numbers(object):
     def action(self, p):
         result = ""
         n = Numbers
+        vn = var.numbers
         for row in xrange(n.rows):
             for col in xrange(n.columns):
                 if math.sqrt((p[1] - (n.button.startY + n.button.offset * row)) ** 2 + 
                              (p[0] - (n.button.startX + n.button.offset * col)) ** 2) < n.button.radius:
-                    if var.numbers.buttonLst[row * 4 + col].number == Numbers.maxNumber:
-                        if var.numbers.buttonLst[row * 4 + col] in n.pressedButtonLst:
-                            var.numbers.buttonLst[row * 4 + col].color = white
-                            n.pressedButtonLst.remove(var.numbers.buttonLst[row * 4 + col])
-                        else:
-                            var.numbers.buttonLst[row * 4 + col].color = darkgrey
-                            n.pressedButtonLst.append(var.numbers.buttonLst[row * 4 + col])
-                        if len(n.pressedButtonLst) == n.numMaxNumbers:
-                            n().getValues()
-                            var.numbers.msElapsed = var.msElapsed
-                            var.score += Numbers.successScore
-                            Numbers.numCorrect += 1
-                            result = "Numbers correct"
+                    vn.msElapsed = var.msElapsed
+                    button = vn.buttonLst[row * 4 + col]
+                    if button in vn.pressedButtonLst:
+                        vn.pressedButtonLst.remove(button)
+                        button.color = white
                     else:
-                        var.score += Numbers.failureScore
-                        Numbers.numIncorrect += 1
-                        result = "Numbers incorrect"
+                        vn.pressedButtonLst.append(button)
+                        button.color = darkgrey
+                    if len(vn.pressedButtonLst) == n.numMaxNumbers:
+                        correct = True
+                        for i in vn.pressedButtonLst:
+                            if i.number != n.maxNumber:
+                                correct = False
+                                break
+                        if correct:
+                            n().getValues()
+                            var.score += n.successScore
+                            n.numCorrect += 1
+                            result = "Numbers correct"
         return result
 
     class button(object):
@@ -863,7 +866,7 @@ def checkMissing():
                  Target.timeOutPeriod, Target.successScore, 
                  Target.failureScore, Target.color, 
                  Numbers.timeOutPeriod, Numbers.successScore, 
-                 Numbers.failureScore, Numbers.timeOutScore]
+                 Numbers.timeOutScore]
     variableNames = ["version", "subjectName", "experimenterName", 
                      "timeLeft", "surfaceW", "surfaceH", "backgroundColor", 
                      "stroop.timeOutPeriod", "stroop.successScore", 
@@ -874,7 +877,7 @@ def checkMissing():
                      "target.timeOutPeriod", "target.successScore", 
                      "target.failureScore", "target.color", 
                      "target.timeOutPeriod", "target.successScore", 
-                     "target.failureScore", "target.timeOutScore"]
+                     "target.timeOutScore"]
     try:
         i = variables.index(None) #check if any variables are missing
         return variableNames[i]
@@ -1057,9 +1060,10 @@ def writeLog():
             Log.text += (c + ":\n" + "total scores gained: " + str(eval(c).totalCorrectScore) + 
                          "\n" + "total scores lost: " + str(eval(c).totalIncorrectScore) + "\n\n")
         else:
-            Log.text += (c + ":\n" + "number correct: " + str(eval(c).numCorrect) + 
-                         "\n" + "number incorrect: " + str(eval(c).numIncorrect) + "\n" + 
-                         "number timed out: " + str(eval(c).numTimedOut) + "\n\n")
+            Log.text += c + ":\n" + "number correct: " + str(eval(c).numCorrect) + "\n"
+            if c != "Numbers": Log.text += "number incorrect: " + str(eval(c).numIncorrect) + "\n"
+            Log.text += "number timed out: " + str(eval(c).numTimedOut) + "\n\n"
+
     Log.text += "\n" + "final score: " + str(var.score) + "\n\n"
     fileObj.write(Log.text)
     fileObj.close()
@@ -1129,12 +1133,12 @@ def actionAll(p): #p for mouse position
         result = var.stroop.action(p)
     elif (p[0] > 0 and p[0] < Surface.w / 2 and p[1] > 0 and p[1] < Surface.h / 2):
         result = var.letters.action(p)
-    elif ((p[0] > Target.buttonLst[0].x and 
-           p[0] < Target.buttonLst[0].x + Target.buttonLst[0].w) or
-          (p[0] > Target.buttonLst[1].x and 
-           p[0] < Target.buttonLst[1].x + Target.buttonLst[1].w) and
-           p[1] > Target.buttonLst[0].y and
-           p[1] < Target.buttonLst[0].y + Target.buttonLst[0].h):
+    elif ((p[0] > var.target.buttonLst[0].x and 
+           p[0] < var.target.buttonLst[0].x + var.target.buttonLst[0].w) or
+          (p[0] > var.target.buttonLst[1].x and 
+           p[0] < var.target.buttonLst[1].x + var.target.buttonLst[1].w) and
+           p[1] > var.target.buttonLst[0].y and
+           p[1] < var.target.buttonLst[0].y + var.target.buttonLst[0].h):
         result = var.target.action(p)
     elif (p[0] > Surface.w / 2 and p[0] < Surface.w and 
           p[1] > Surface.h / 2 and p[1] < Surface.h): 
@@ -1166,6 +1170,7 @@ def main():
             if event.type == pygame.QUIT:
                 var.playing = False
         var.log.update()
+    writeLog()
     pygame.quit()
     sys.exit()
 
