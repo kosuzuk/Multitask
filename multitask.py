@@ -239,12 +239,16 @@ class Stroop(object):
         temp = random.choice(var.colorNames)
         #new instance of stroop
         if var.playing == False:
-            Stroop.question.x    = Quad.w * 1.35
-            Stroop.question.y    = Quad.margin * 0.75 + Quad.h / 2
-            Stroop.question.size = Surface.w / 10.5
+            q = Stroop.question
+            q.x    = Quad.w * 1.35
+            q.y    = Quad.margin * 0.75 + Quad.h / 2
+            q.size = Surface.w / 10.5
             var.stroop = Stroop()
             #inputs to Stroop.question.__init__ are text, answer, color
-            var.stroop.question  = Stroop.question(temp, temp, eval(temp))
+            var.stroop.question = q(temp, temp, eval(temp))
+            while (temp == var.stroop.question.answer):
+                temp = random.choice(var.colorNames)
+            q.text = temp
 
             #values for the four buttons
             b = Stroop.button
@@ -262,19 +266,21 @@ class Stroop(object):
         else:
             #new values, same stroop instance
             q = var.stroop.question
-            while (temp == q.answer):
-                temp = random.choice(var.colorNames)
-            q.answer = temp
-            q.color = eval(temp)
+            order = random.randint(0, 1)
+            for i in xrange(2):
+                old = q.answer if order == 0 else q.text
+                while (temp == old):
+                    temp = random.choice(var.colorNames)
+                if order == i:
+                    q.answer = temp
+                    q.color = eval(temp)
+                else:
+                    q.text = temp
 
-        q = var.stroop.question
-        while (temp == q.answer):
-            temp = random.choice(var.colorNames)
-        q.text = temp
-        x = Quad.margin + Quad.w / 2 + (Quad.w + Quad.margin / 2)
+        """x = Quad.margin + Quad.w / 2 + (Quad.w + Quad.margin / 2)
         y = Quad.margin + Quad.h / 2
         r = Quad.h / 2
-        var.backgroundTimerLst[0].pstLst = [[x, y], [x, y - r], [x + 1, y - r]]
+        var.backgroundTimerLst[0].pstLst = [[x, y], [x, y - r], [x + 1, y - r]]"""
 
     def draw(self, s):
         #draw question
@@ -405,10 +411,10 @@ class Letters(object):
         while newChar == oldChar: newChar = chr(random.randrange(97, 123))
         q.char = newChar
         q.answer = newChar in Letters.string
-        x = Quad.margin + Quad.w / 2
+        """x = Quad.margin + Quad.w / 2
         y = Quad.margin + Quad.h / 2
         r = Quad.h / 2
-        var.backgroundTimerLst[1].pstLst = [[x, y], [x, y - r], [x + 1, y - r]]
+        var.backgroundTimerLst[1].pstLst = [[x, y], [x, y - r], [x + 1, y - r]]"""
 
     def draw(self, s):
         #draw char
@@ -672,10 +678,10 @@ class Numbers(object):
             while bLst[randomIndex].number == Numbers.maxNumber:
                 randomIndex = random.randint(0, len(bLst) - 1)
             bLst[randomIndex].number = Numbers.maxNumber
-        x = Quad.margin + Quad.w / 2 + (Quad.w + Quad.margin / 2)
+        """x = Quad.margin + Quad.w / 2 + (Quad.w + Quad.margin / 2)
         y = Quad.margin + Quad.h / 2 + (Quad.h + Quad.margin / 2)
         r = Quad.h / 2
-        var.backgroundTimerLst[2].pstLst = [[x, y], [x, y - r], [x + 1, y - r]]
+        var.backgroundTimerLst[2].pstLst = [[x, y], [x, y - r], [x + 1, y - r]]"""
 
     def draw(self, s):
         b = var.numbers.button
@@ -1081,11 +1087,12 @@ def checkTime():
     classes = [var.backgroundTimerLst[0], var.stroop, var.letters, var.target, var.numbers, var.log]
     classNames = ["", "Stroop", "Letters", "Target", "Numbers"]
     for c in classes:
+        i = classes.index(c)
+        if i == 0: continue
         if var.msElapsed - c.msElapsed > c.timeOutPeriod:
             c.getValues()
             c.msElapsed = var.msElapsed
-            i = classes.index(c)
-            if i in [0, 3, 5]: continue
+            if i in [3, 5]: continue
             var.score += c.timeOutScore
             eval(classNames[i]).numTimedOut += 1
             Log.timedOutTextLst.append((classNames[i], var.score, var.msElapsed))
@@ -1153,7 +1160,7 @@ def main():
     var.popUpDuration = pygame.time.get_ticks()
     surfaceSize = (Surface.w, Surface.h)
     surface = pygame.display.set_mode(surfaceSize)
-    getValuesAll()
+    getValuesAll() #initial values
     var.playing = True
     while var.playing:
         checkTime()

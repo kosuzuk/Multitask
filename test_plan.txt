@@ -1,0 +1,36 @@
+Stroop:
+
+variables in cfg file:
+
+timeOutPeriod    =  8 ;in seconds
+If the user does not answer the question in this many seconds, the user will lose some points, specified in the timeOutScore variable. Then there will be a new question. If the user answers a question, regardless of the correctness, the user will be given timeOutPeriod seconds again to answer the next question.
+
+successScore      =  3
+user gets this many points if answers correctly
+
+failureScore        = -5
+user gets this many points if answers incorrectly
+
+timeOutScore     = -10
+user gets this many points if user does not answer in timeOutPeriod seconds
+
+If any of these variables are outside of Begin {stroop} and End {stroop} tags, there will be an error message that specifies which line the error is at in the file, and the program will quit.
+
+
+In this module, the user must click on one of the four buttons that has the same color as the question, which is a color name, written in a font that has a different color than its color name, in order to gain points. If answered correctly, they receive successScore, and if incorrect, failureScore. If the user does nothing for the entirety of timeOutPeriod, they receive timeOutScore, which is negative.
+
+
+things to test:
+
+-change the variables in cfg file, and test that the program reflects the change
+-the module times out at the right time, and user receives negative points
+-if user answers, there will be another full timeOutPeriod seconds to answer next question
+-earn successPoints if answer correctly
+-earn failurePoints if answer incorrectly
+-no effect if click outside buttons
+-each successive question will be different in font color, color name, or both.
+-in the log file, recorded information are: cfg file, click position with effect if any, module timeOut, score at different times, number of correct answers, number of incorrect answers, number of time outs.
+
+
+
+
