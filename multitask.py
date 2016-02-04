@@ -539,14 +539,11 @@ class Target(object):
             Target.distance      = Target.offset * Target.numCircles
             Target.outline       = 1
             Target.outlineColor  = black
-            Target.timeOutPeriod /= 10.0
             #initialize var.target and dot
             var.target = Target()
             direction = math.radians(random.randrange(0, 359))
-            speed = min(Surface.w, Surface.h) / 28 / 6
-            var.target.dot = Target.dot(Target.x, Target.y, direction, 0 - speed)
+            var.target.dot = Target.dot(Target.x, Target.y, direction, Target.dot.speed)
             Target.dot.radius = min(Surface.w, Surface.h) / 28 / 5 #5 times smaller than Target.offset
-            Target.dot.speed  = speed
 
             #initionalize buttons
             for i in xrange(2):
@@ -567,15 +564,8 @@ class Target(object):
                     x = Quad.margin + Quad.w - Quad.margin - Target.button.w
                     var.target.buttonLst.append(Target.button(x, y))
 
-        #change position of dot
-        d = var.target.dot
-        if d.distance < (Target.distance + (Quad.h / 2 - Target.distance) / 2):
-            d.distance += d.speed
-            d.x = Target.x + d.distance * math.cos(d.direction)
-            d.y = Target.y + d.distance * math.sin(d.direction)
-
-        #change score
-        if d.distance > Target.distance:
+        #check for failure score
+        if var.target.dot.distance > Target.distance:
             var.score += Target.failureScore
             Target.totalIncorrectScore += Target.failureScore
 
@@ -606,18 +596,29 @@ class Target(object):
                 Target.totalCorrectScore += i * Target.successScore
                 break
         direction = math.radians(random.randrange(0, 359))
-        var.target.dot = Target.dot(Target.x, Target.y, direction, 0 - Target.dot.speed)
+        var.target.dot = Target.dot(Target.x, Target.y, direction, 0)
         return "Target reset"
 
     class dot(object):
-        radius = None
-        speed  = None
-        color  = red
+        timeOutPeriod = 100
+        msElapsed    = 0
+        radius       = None
+        speed        = None
+        color        = red
+
         def __init__(self, x, y, direction, distance):
             self.x         = x
             self.y         = y
             self.direction = direction
             self.distance  = distance #distance from center of target to center of dot
+
+        def getValues(self):
+            #change position of dot
+            d = var.target.dot
+            if d.distance < (Target.distance + (Quad.h / 2 - Target.distance) / 2):
+                d.distance += d.speed
+                d.x = Target.x + d.distance * math.cos(d.direction)
+                d.y = Target.y + d.distance * math.sin(d.direction)
 
     class button(object):
         w            = None
@@ -666,7 +667,7 @@ class Numbers(object):
                 b.startX       = (Quad.margin * 1.5 + Quad.w + 
                                  (Quad.w - (b.radius * 2 + b.offset * 3)) / 2 + b.radius)
                 b.startY       = (Quad.margin * 1.5 + Quad.h + 
-                                    (Quad.h - (b.radius * 2 + b.offset * 3)) / 2 + b.radius)
+                                 (Quad.h - (b.radius * 2 + b.offset * 3)) / 2 + b.radius)
                 b.outline      = 2
                 b.outlineColor = black
                 b.textColor    = black
@@ -850,8 +851,8 @@ def checkLine(l):
     tail = l[eqIndex + 1: len(l)]
     valid = ["version", "subjectname", "experimentername", "timeleft", 
              "surfacew", "surfaceh", "backgroundcolor", "timeoutperiod", 
-             "successscore", "failurescore", "timeoutscore", "showstringscore", 
-             "stringlength", "color"]
+             "successscore", "failurescore", "timeoutscore",
+             "showstringscore", "stringlength", "speed", "color"]
     if head not in valid:
         return (False, "variable")
     elif "=" in tail or "{" in tail or "}" in tail:
@@ -870,7 +871,7 @@ def checkMissing():
                  Letters.failureScore, Letters.showStringScore, 
                  Letters.timeOutScore, Letters.stringLength, 
                  Target.timeOutPeriod, Target.successScore, 
-                 Target.failureScore, Target.color, 
+                 Target.failureScore, Target.dot.speed, Target.color, 
                  Numbers.timeOutPeriod, Numbers.successScore, 
                  Numbers.timeOutScore]
     variableNames = ["version", "subjectName", "experimenterName", 
@@ -881,9 +882,9 @@ def checkMissing():
                      "letters.failureScore", "letters.showStringScore", 
                      "letters.timeOutScore", "Letters.stringLength", 
                      "target.timeOutPeriod", "target.successScore", 
-                     "target.failureScore", "target.color", 
-                     "target.timeOutPeriod", "target.successScore", 
-                     "target.timeOutScore"]
+                     "target.failureScore", "target.dot.speed", "target.color", 
+                     "numbers.timeOutPeriod", "numbers.successScore", 
+                     "numbers.timeOutScore"]
     try:
         i = variables.index(None) #check if any variables are missing
         return variableNames[i]
@@ -999,7 +1000,7 @@ def readCfg():
                     module = None
                     inModule = False
                 elif l.startswith("timeoutperiod"):
-                    if type(value) != int:
+                    if type(value) != int and type(value) != float:
                         return error(i, "value")
                     if module.timeOutPeriod != None:
                         return error(i, "duplicate")
@@ -1011,6 +1012,8 @@ def readCfg():
                         return error(i, "duplicate")
                     module.successScore = value
                 elif l.startswith("failurescore"):
+                    if module == Numbers:
+                        return error(i, "variable")
                     if type(value) != int:
                         return error(i, "value")
                     if module.failureScore != None:
@@ -1018,7 +1021,7 @@ def readCfg():
                     module.failureScore = value
                 elif l.startswith("timeoutscore"):
                     if module == Target:
-                        return error(i, "value")
+                        return error(i, "variable")
                     if type(value) != int:
                         return error(i, "value")
                     if module.timeOutScore != None:
@@ -1040,7 +1043,17 @@ def readCfg():
                     if module.stringLength != None:
                         return error(i, "duplicate")
                     module.stringLength = value
+                elif l.startswith("speed"):
+                    if module != Target:
+                        return error(i, "variable")
+                    if type(value) != int and type(value) != float:
+                        return error(i, "value")
+                    if module.dot.speed != None:
+                        return error(i, "duplicate")
+                    module.dot.speed = value
                 elif l.startswith("color"):
+                    if module != Target:
+                        return error(i, "variable")
                     if type(value) != tuple or \
                        type(value[0] + value[1] + value[2]) != int:
                         return error(i, "value")
@@ -1084,15 +1097,16 @@ def checkTime():
         ask("You are done. Thank you for your participation. Press 'esc' to exit.")
 
     #check time out for specific modules
-    classes = [var.backgroundTimerLst[0], var.stroop, var.letters, var.target, var.numbers, var.log]
-    classNames = ["", "Stroop", "Letters", "Target", "Numbers"]
+    classes = [var.backgroundTimerLst[0], var.stroop, var.letters, \
+               var.target, var.target.dot, var.numbers, var.log]
+    classNames = ["", "Stroop", "Letters", "Target", "Target.dot", "Numbers"]
     for c in classes:
         i = classes.index(c)
         if i == 0: continue
         if var.msElapsed - c.msElapsed > c.timeOutPeriod:
             c.getValues()
             c.msElapsed = var.msElapsed
-            if i in [3, 5]: continue
+            if i in [3, 4, 6]: continue
             var.score += c.timeOutScore
             eval(classNames[i]).numTimedOut += 1
             Log.timedOutTextLst.append((classNames[i], var.score, var.msElapsed))

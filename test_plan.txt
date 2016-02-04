@@ -1,5 +1,9 @@
 Stroop:
 
+
+In this module, the user must click on one of the four buttons that has the same color as the question, which is a color name, written in a font that has a different color than its color name, in order to gain points. If answered correctly, they receive successScore, and if incorrect, failureScore. If the user does nothing for the entirety of timeOutPeriod, they receive timeOutScore, which is negative.
+
+
 variables in cfg file:
 
 timeOutPeriod    =  8 ;in seconds
@@ -14,23 +18,131 @@ user gets this many points if answers incorrectly
 timeOutScore     = -10
 user gets this many points if user does not answer in timeOutPeriod seconds
 
-If any of these variables are outside of Begin {stroop} and End {stroop} tags, there will be an error message that specifies which line the error is at in the file, and the program will quit.
+
+things to test:
+
+-each successive question will be different in font color, color name, or both.
 
 
-In this module, the user must click on one of the four buttons that has the same color as the question, which is a color name, written in a font that has a different color than its color name, in order to gain points. If answered correctly, they receive successScore, and if incorrect, failureScore. If the user does nothing for the entirety of timeOutPeriod, they receive timeOutScore, which is negative.
+##############################################################
+
+
+Letters:
+
+
+In this module, there will first be a string shown for timeOutPeriod / 3 seconds. After that many seconds, the string will disappear, replaced by the text "Retrieve List". A randomly chosen character from the alphabet and boolean buttons will also appear. The goal of the user is to click on "True" if they think the given character is in the string, and false otherwise. The successScore will be added to the total score if the user answers correctly, and FailureScore will be added if incorrect. If the user clicks on "Retrieve List", showStringScore, which is negative, will be added to the score, and the "Retrieve List" button will be replaced by the string. If the user clicks on a boolean button or doesn't answer for TimeOutPeriod Seconds, there will be a new character, and timeOutScore (also negative) will be added to score.
+
+
+variables in cfg file:
+
+timeOutPeriod    =  8
+
+successScore     =  5
+when user clicks on True if the shown character is in string, or user clicks False when the character is not in string.
+
+failureScore     = -8
+
+showStringScore  = -10
+if user clicks on this "Retrieve List" button, the string will appear on the screen, The boolean buttons disappear, and user gets negative points
+
+timeOutScore     = -10
+
+stringLength     =  6
+length of string (will not change throughout game)
 
 
 things to test:
 
--change the variables in cfg file, and test that the program reflects the change
--the module times out at the right time, and user receives negative points
+-when "Retrieve List" is clicked, the original string is shown, boolean buttons disappear, user gets showStringScore, and after timeOutPeriod / 3 seconds, the string is replaced by "Retrieve List" text, and boolean buttons reappear. The user does not get a full timeOutPeriod duration, because the duration of the time that the string is being shown is taking up the time to answer the question.
+-each successive question will have different character.
+
+
+##############################################################
+
+
+Target:
+
+
+In this module, the red dot starts at the center of the target, and continuously moves away from the center until it is outside the target. The red dot will stay outside and failureScore will be added to the total score every timeOutPeriod seconds, until the user clicks on one of the 'reset' buttons, which will being the dot back to the center and stop the deduction of points. If the user clicks on 'reset' before the dot goes outside the target, 2 * ring number points are added to score. The center circle is ring number 0.
+
+
+timeOutPeriod    =  .5 ;determines time interval at which failure score will be added
+
+successScore     =  2
+when the user clicks when the dot is within the target, 2 * ring number is added to score. The circle is ring number 0.
+
+failureScore     = -5
+If the dot is outside the target, this score will be added to total score every timeOutPeriod seconds, which is currently set to .5 sec in the default cfg.
+
+speed            =  2.5 ;red dot moves 'speed' number of pixels every tenth of a second
+
+color            =  white
+color of target
+
+
+things to test:
+
+-red dot starts at center and moves in a straight random direction at a constant speed specified in the cfg file, until it reached the outside of the target, and score will be deducted according to timeOutPeriod and failureScore
+-pressing reset will immediately move the dot back to center
+-pressing reset when dot is within target will add correct amount of points to total score
+
+
+##############################################################
+
+
+Numbers:
+
+
+In this module, the user must click on all of the max values only in the number grid in order to gain successScore for that instance of the number grid. If the user clicks on a number that doesn't complete the problem correctly, the clicked button will be highlighted grey, and the user will have timeOutPeriod more seconds to complete that instance of the problem. If clicking a button completes the problem, successScore will be, and a new numberGrid will be shown. Highlighted Buttons can be unhighlighted, and the user will only gain failureScore, if they don't click any buttons for the entire timeOutPeriod seconds.
+
+
+the algorithm for generating a new number grid is as follows:
+
+1) get number instances of max values: a random number between 1 and 7
+2) get max value: a random number between 4 and 9
+3) append to number grid list a random number between 0 and (max value - 1), len(number grid list) times
+4) get random index among the indices of number grid list, if the index contains max value, keep trying, and replace number at that index with max value. do this number of max value times
+
+
+timeOutPeriod    =  10
+number of seconds user does not click on any button on number grid, until new instance of number grid is given and timeOutScore is added.
+
+successScore     =  30
+this is added to total score if user manages to click on all of the max values only in the number grid
+
+timeOutScore     = -10
+this is added to total score if module times out.
+
+
+things to test:
+
+-new instances are different from previous instance
+-new instances may only have elements 0 thru max value, and there are at most 7 max values
+-clicking on a button will highlight or unhighlight it
+-successScore is added and new instance is given only if all of the max values are highlighted, and nothing else
+
+
+################################################################
+
+
+tests common to all modules/other things to test:
+
+-the module times out at the right time, and user receives timeOutScore
 -if user answers, there will be another full timeOutPeriod seconds to answer next question
--earn successPoints if answer correctly
--earn failurePoints if answer incorrectly
 -no effect if click outside buttons
--each successive question will be different in font color, color name, or both.
--in the log file, recorded information are: cfg file, click position with effect if any, module timeOut, score at different times, number of correct answers, number of incorrect answers, number of time outs.
+-in the log file, recorded information are: cfg file, click position with effect if any, module timeOut, score at different times, number of correct answers, number of incorrect answers, number of timeouts.
+-change the module variables in cfg file, and test that the program reflects the change
+-comments begin with ";" and end at new line (press Enter, not "\n"). Comments,  blank lines, and cases are ignored
+-cfg file follows a syntax rule, and may give error message with line number and quit program if:
 
-
+-duplicate variables
+-unknown variables
+-missing variables
+-format of 'version' variable is not automaticDateAndTime_x_x or YYYY-MM-DD_HH-MM_x_x, where x is any character of any length
+-wrong variable for a given module ("showStringScore" and "stringLength" are only for Letters. "speed" and "color" are only for Target. "timeOutScore is not for Target. "failureScore" is not for Numbers.)
+-Begin{some module} End{some module} tags do not come in that order
+-for any given line, the format is not "variable = value", disregarding comments, new lines, and Begin{some module} End{some module} tags
+-if value after "=" is not right type, for instance, timeLeft and successScore are not ints
+-If any of these variables [timeOutPeriod, successScore, failureScore, showStringScore, timeOutScore, stringLength, speed, color] are outside of Begin {some module} and End {some module} tags
 
 
